@@ -1,103 +1,121 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useRef } from 'react';
+import { BiImageAdd, BiText, BiDownload } from 'react-icons/bi';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import TShirtCanvas from './components/TShirtCanvas';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasRef = useRef<{ addText: () => void; downloadCanvas: () => void }>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        // For SVGs, we need to ensure proper encoding
+        if (file.type === 'image/svg+xml') {
+          const encoded = encodeURIComponent(result);
+          setUploadedImage(`data:image/svg+xml;charset=utf-8,${encoded}`);
+        } else {
+          setUploadedImage(result);
+        }
+      };
+      
+      if (file.type === 'image/svg+xml') {
+        reader.readAsText(file);
+      } else {
+        reader.readAsDataURL(file);
+      }
+    }
+  };
+
+  const handleSaveDesign = () => {
+    // The save functionality is now handled in TShirtCanvas
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-[#FEFFFE]">
+      <Header />
+      
+      <main className="flex-grow">
+        <div className="w-full min-h-screen">
+          <div className="text-center mb-12 px-4">
+            <h1 className="text-5xl font-bold text-[#0B3954] mb-4">Design Your Meme Shirt</h1>
+            <p className="text-xl text-[#8B575C]">Create unique and funny t-shirts with your favorite memes!</p>
+          </div>
+          
+          <div className="flex flex-col md:flex-row items-stretch min-h-[80vh]">
+            {/* Preview Section */}
+            <div className="flex-1 px-4 md:px-8">
+              <TShirtCanvas 
+                ref={canvasRef}
+                uploadedImage={uploadedImage}
+              />
+            </div>
+
+            {/* Controls Section */}
+            <div className="flex-1 px-4 md:px-8">
+              <div className="h-full min-h-[600px] overflow-y-auto space-y-8 bg-white p-8 rounded-lg shadow-lg border border-[#BFD7EA]">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#0B3954] mb-6">Customize Your Design</h2>
+                  
+                  <div className="space-y-6">
+                    <div className="flex gap-4">
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#BFD7EA] hover:bg-[#0B3954] text-[#0B3954] hover:text-white font-bold py-4 px-6 rounded-lg transition-colors"
+                      >
+                        <BiImageAdd className="w-6 h-6" />
+                        Add Image
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*,.svg"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      
+                      <button
+                        onClick={() => canvasRef.current?.addText()}
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#BFD7EA] hover:bg-[#0B3954] text-[#0B3954] hover:text-white font-bold py-4 px-6 rounded-lg transition-colors"
+                      >
+                        <BiText className="w-6 h-6" />
+                        Add Text
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => canvasRef.current?.downloadCanvas()}
+                      className="w-full flex items-center justify-center gap-2 bg-[#C98986] hover:bg-[#8B575C] text-white font-bold py-4 px-6 rounded-lg transition-colors"
+                    >
+                      <BiDownload className="w-6 h-6" />
+                      Download Design
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-8 p-6 bg-[#BFD7EA]/10 rounded-lg">
+                  <h3 className="text-lg font-semibold text-[#0B3954] mb-3">Design Tips</h3>
+                  <ul className="space-y-2 text-[#8B575C]">
+                    <li>🖱️ Drag elements to position them</li>
+                    <li>↔️ Use corner handles to resize</li>
+                    <li>🔄 Rotate using the top handle</li>
+                    <li>✨ Double-click text to edit</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+      <Footer />
     </div>
   );
 }
