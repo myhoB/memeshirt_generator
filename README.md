@@ -51,3 +51,7 @@ npm run dev
 ## License
 
 MIT License - feel free to use this project for any purpose.
+
+## Assets
+
+The application requires a t-shirt template image (`public/tshirt-template.png`) to function properly. This file is included in the repository and should be automatically deployed.
