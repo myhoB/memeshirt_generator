@@ -89,17 +89,29 @@ const TShirtCanvas = forwardRef<TShirtCanvasRef, TShirtCanvasProps>(({ uploadedI
     if (!container) return;
     
     const rect = container.getBoundingClientRect();
-    const centerX = rect.width / 2 - 100;
+    const centerX = rect.width / 2 - 50;
     const centerY = rect.height / 2 - 25;
+
+    const defaultText = 'Text';
+    const fontSize = 50;
+    
+    // Create a canvas to measure text width
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    
+    context.font = `${fontSize}px Arial`;
+    const metrics = context.measureText(defaultText);
+    const width = metrics.width + 40; // Add some padding
 
     const newElement: DesignElement = {
       id: `text-${Date.now()}`,
       type: 'text',
-      content: 'Text',
+      content: defaultText,
       x: centerX,
       y: centerY,
-      width: 200,
-      height: 50,
+      width: width,
+      height: fontSize,
       rotation: 0,
     };
     setElements(prev => [...prev, newElement]);

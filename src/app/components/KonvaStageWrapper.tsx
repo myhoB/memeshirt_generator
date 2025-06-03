@@ -75,6 +75,35 @@ const DesignElement = ({
 
   const shapeRef = element.type === 'image' ? imageRef : textRef;
 
+  // Add function to measure text width
+  const measureText = (text: string, fontSize: number) => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    if (!context) return { width: 200, height: fontSize };
+
+    context.font = `${fontSize}px Arial`;
+    const metrics = context.measureText(text);
+    
+    return {
+      width: Math.ceil(metrics.width + 20), // Add fixed padding
+      height: Math.ceil(fontSize * 1.2) // Add line height
+    };
+  };
+
+  useEffect(() => {
+    // Only measure and update when content changes and not editing
+    if (element.type === 'text' && textRef.current && !isEditing) {
+      const { width } = measureText(element.content, element.height);
+      
+      // Only update if the new width is significantly larger than current width
+      if (width > element.width + 10) {
+        onChange({
+          width: width
+        });
+      }
+    }
+  }, [element.content]); // Only depend on content changes
+
   useEffect(() => {
     if (isSelected && trRef.current && shapeRef.current) {
       trRef.current.nodes([shapeRef.current]);
@@ -171,6 +200,8 @@ const DesignElement = ({
     const stage = textNode.getStage();
     if (!stage) return;
 
+    setIsEditing(true);
+
     const stageBox = stage.container().getBoundingClientRect();
     const textPosition = textNode.absolutePosition();
     
@@ -189,27 +220,23 @@ const DesignElement = ({
     textarea.style.position = 'absolute';
     textarea.style.top = `${areaPosition.y}px`;
     textarea.style.left = `${areaPosition.x}px`;
-    textarea.style.width = `${textNode.width() * textNode.scaleX()}px`;
-    textarea.style.height = `${textNode.height() * textNode.scaleY()}px`;
+    textarea.style.width = `${textNode.width()}px`;
+    textarea.style.height = `${textNode.height()}px`;
     textarea.style.fontSize = `${element.height}px`;
     textarea.style.border = '1px dashed #000';
-    textarea.style.padding = '0px';
+    textarea.style.padding = '10px';
     textarea.style.margin = '0px';
     textarea.style.overflow = 'hidden';
-    textarea.style.background = 'none';
+    textarea.style.background = 'rgba(255, 255, 255, 0.9)';
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
-    textarea.style.lineHeight = '1';
+    textarea.style.lineHeight = '1.2';
     textarea.style.fontFamily = 'Arial';
     textarea.style.transformOrigin = 'left top';
     textarea.style.textAlign = 'center';
     textarea.style.color = element.color || '#8B575C';
-
-    const rotation = textNode.rotation();
-    const transform = rotation ? `rotateZ(${rotation}deg)` : '';
-    if (transform) {
-      textarea.style.transform = transform;
-    }
+    textarea.style.whiteSpace = 'pre';
+    textarea.style.boxSizing = 'border-box';
 
     textarea.focus();
 
@@ -218,8 +245,13 @@ const DesignElement = ({
       document.body.removeChild(textarea);
       textNode.show();
       stage.batchDraw();
-      onChange({ content: newText });
+      
       setIsEditing(false);
+      
+      // Only update if the text has actually changed
+      if (newText !== element.content) {
+        onChange({ content: newText });
+      }
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -233,7 +265,6 @@ const DesignElement = ({
 
     textarea.addEventListener('blur', handleBlur);
     textarea.addEventListener('keydown', handleKeyDown);
-    setIsEditing(true);
   };
 
   const commonProps = {
@@ -276,6 +307,8 @@ const DesignElement = ({
           verticalAlign="middle"
           onDblClick={handleTextDblClick}
           onDblTap={handleTextDblClick}
+          padding={10}
+          width={element.width}
         />
       )}
       {isSelected && !isEditing && (
