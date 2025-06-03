@@ -2,15 +2,13 @@
 
 import { useState, useRef, useEffect, forwardRef, useImperativeHandle, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { v4 as uuidv4 } from 'uuid';
-
-// Import Konva types
-import type { KonvaEventObject } from 'konva/lib/Node';
-import type { Stage as StageType } from 'konva/lib/Stage';
 import type { KonvaStageWrapperProps, KonvaStageWrapperRef } from './KonvaStageWrapper';
+import type { RefAttributes } from 'react';
 
 // Create a wrapper component for the entire Konva stage
-const KonvaStageWrapper = dynamic<KonvaStageWrapperProps>(() => import('./KonvaStageWrapper'), {
+const KonvaStageWrapper = dynamic<
+  KonvaStageWrapperProps & RefAttributes<KonvaStageWrapperRef>
+>(() => import('./KonvaStageWrapper'), {
   ssr: false,
   loading: () => (
     <div className="bg-[#BFD7EA] p-12 rounded-lg relative w-[1000px] h-[1200px] overflow-hidden mx-auto">

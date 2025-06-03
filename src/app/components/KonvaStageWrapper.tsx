@@ -1,9 +1,12 @@
 'use client';
 
 import { useRef, useEffect, useState, forwardRef, useImperativeHandle } from 'react';
-import { Stage, Layer, Image, Text, Transformer, Group, Circle } from 'react-konva';
+import { Stage, Layer, Image, Text, Transformer, Group } from 'react-konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import type { Stage as StageType } from 'konva/lib/Stage';
+import type { Image as ImageType } from 'konva/lib/shapes/Image';
+import type { Text as TextType } from 'konva/lib/shapes/Text';
+import type { Transformer as TransformerType } from 'konva/lib/shapes/Transformer';
 
 interface DesignElement {
   id: string;
@@ -23,7 +26,6 @@ export interface KonvaStageWrapperProps {
   selectedId: string | null;
   onSelect: (id: string | null) => void;
   onElementsChange: (elements: DesignElement[]) => void;
-  onAddText: () => void;
 }
 
 export interface KonvaStageWrapperRef {
@@ -64,11 +66,29 @@ const DesignElement = ({
   onChange: (newAttrs: Partial<DesignElement>) => void;
   onDelete: () => void;
 }) => {
-  const shapeRef = useRef<any>(null);
-  const trRef = useRef<any>(null);
+  const imageRef = useRef<ImageType | null>(null);
+  const textRef = useRef<TextType | null>(null);
+  const trRef = useRef<TransformerType | null>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteButtonPos, setDeleteButtonPos] = useState({ x: 0, y: 0 });
+
+  const shapeRef = element.type === 'image' ? imageRef : textRef;
+
+  useEffect(() => {
+    if (isSelected && trRef.current && shapeRef.current) {
+      trRef.current.nodes([shapeRef.current]);
+      trRef.current.getLayer()?.batchDraw();
+
+      // Update delete button position based on transformer bounds
+      const transformer = trRef.current;
+      const box = transformer.getClientRect();
+      setDeleteButtonPos({
+        x: box.x + box.width,
+        y: box.y
+      });
+    }
+  }, [isSelected, shapeRef]);
 
   useEffect(() => {
     if (element.type === 'image') {
@@ -77,8 +97,8 @@ const DesignElement = ({
       img.onload = () => {
         setImage(img);
       };
-      img.onerror = (e) => {
-        console.error('Error loading image:', e);
+      img.onerror = (error) => {
+        console.error('Error loading image:', error);
       };
 
       // Check if the image is an SVG (either by data URL or file extension)
@@ -101,22 +121,6 @@ const DesignElement = ({
       }
     }
   }, [element.content, element.type]);
-
-  useEffect(() => {
-    if (isSelected && trRef.current && shapeRef.current) {
-      trRef.current.nodes([shapeRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-
-      // Update delete button position based on transformer bounds
-      const node = shapeRef.current;
-      const transformer = trRef.current;
-      const box = transformer.getClientRect();
-      setDeleteButtonPos({
-        x: box.x + box.width,
-        y: box.y
-      });
-    }
-  }, [isSelected]);
 
   const handleTransform = () => {
     if (!shapeRef.current) return;
@@ -160,11 +164,13 @@ const DesignElement = ({
     }
   };
 
-  const handleTextDblClick = (e: KonvaEventObject<MouseEvent>) => {
-    if (element.type !== 'text') return;
+  const handleTextDblClick = () => {
+    if (element.type !== 'text' || !textRef.current) return;
     
-    const textNode = shapeRef.current;
+    const textNode = textRef.current;
     const stage = textNode.getStage();
+    if (!stage) return;
+
     const stageBox = stage.container().getBoundingClientRect();
     const textPosition = textNode.absolutePosition();
     
@@ -193,7 +199,7 @@ const DesignElement = ({
     textarea.style.background = 'none';
     textarea.style.outline = 'none';
     textarea.style.resize = 'none';
-    textarea.style.lineHeight = textNode.lineHeight() || '1';
+    textarea.style.lineHeight = '1';
     textarea.style.fontFamily = 'Arial';
     textarea.style.transformOrigin = 'left top';
     textarea.style.textAlign = 'center';
@@ -246,7 +252,6 @@ const DesignElement = ({
     },
     onTransformEnd: handleTransform,
     draggable: true,
-    ref: shapeRef,
   };
 
   return (
@@ -254,12 +259,15 @@ const DesignElement = ({
       {element.type === 'image' && (
         <Image
           {...commonProps}
+          ref={imageRef}
           image={image || undefined}
+          alt={`Design element ${element.id}`}
         />
       )}
       {element.type === 'text' && (
         <Text
           {...commonProps}
+          ref={textRef}
           text={element.content}
           fontSize={element.height}
           fill={element.color || '#8B575C'}
@@ -274,7 +282,7 @@ const DesignElement = ({
         <>
           <Transformer
             ref={trRef}
-            boundBoxFunc={(oldBox: any, newBox: any) => {
+            boundBoxFunc={(oldBox, newBox) => {
               const minWidth = 20;
               const minHeight = 20;
               if (newBox.width < minWidth || newBox.height < minHeight) {
@@ -315,7 +323,6 @@ const KonvaStageWrapper = forwardRef<KonvaStageWrapperRef, KonvaStageWrapperProp
   selectedId,
   onSelect,
   onElementsChange,
-  onAddText,
 }, ref) => {
   const stageRef = useRef<StageType>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -401,6 +408,7 @@ const KonvaStageWrapper = forwardRef<KonvaStageWrapperRef, KonvaStageWrapperProp
             x={-(size.width * 1.3 - size.width) / 2}
             y={-(size.height * 1.3 - size.height) / 2}
             listening={false}
+            alt="T-shirt template"
           />
 
           {elements.map((element) => (

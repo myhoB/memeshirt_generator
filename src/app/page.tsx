@@ -34,10 +34,6 @@ export default function Home() {
     }
   };
 
-  const handleSaveDesign = () => {
-    // The save functionality is now handled in TShirtCanvas
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FEFFFE]">
       <Header />
