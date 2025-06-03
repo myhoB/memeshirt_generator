@@ -23,7 +23,7 @@ A web application for designing custom t-shirts with memes, text, and images. Bu
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/YOUR_USERNAME/memeshirt_generator.git
+git clone https://github.com/myhoB/memeshirt_generator.git
 cd memeshirt_generator
 ```
 
