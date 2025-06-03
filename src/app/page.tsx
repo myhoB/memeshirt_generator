@@ -1,15 +1,18 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { BiImageAdd, BiText, BiDownload } from 'react-icons/bi';
+import { BiImageAdd, BiText, BiDownload, BiSmile } from 'react-icons/bi';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import TShirtCanvas from './components/TShirtCanvas';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 
 export default function Home() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const canvasRef = useRef<{ addText: () => void; downloadCanvas: () => void }>(null);
+  const canvasRef = useRef<{ addText: (initialText?: string) => void; downloadCanvas: () => void }>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -34,11 +37,19 @@ export default function Home() {
     }
   };
 
+  const handleEmojiSelect = (emoji: any) => {
+    if (canvasRef.current?.addText) {
+      // Add the emoji as text
+      canvasRef.current.addText(emoji.native);
+      setShowEmojiPicker(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FEFFFE]">
       <Header />
       
-      <main className="flex-grow">
+      <main className="flex-grow relative">
         <div className="w-full min-h-screen">
           <div className="text-center mb-12 px-4">
             <h1 className="text-5xl font-bold text-[#0B3954] mb-4">Design Your Meme Shirt</h1>
@@ -84,6 +95,14 @@ export default function Home() {
                         <BiText className="w-6 h-6" />
                         Add Text
                       </button>
+
+                      <button
+                        onClick={() => setShowEmojiPicker(true)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-[#BFD7EA] hover:bg-[#0B3954] text-[#0B3954] hover:text-white font-bold py-4 px-6 rounded-lg transition-colors"
+                      >
+                        <BiSmile className="w-6 h-6" />
+                        Add Emoji
+                      </button>
                     </div>
 
                     <button
@@ -99,16 +118,40 @@ export default function Home() {
                 <div className="mt-8 p-6 bg-[#BFD7EA]/10 rounded-lg">
                   <h3 className="text-lg font-semibold text-[#0B3954] mb-3">Design Tips</h3>
                   <ul className="space-y-2 text-[#8B575C]">
-                    <li>🖱️ Drag elements to position them</li>
-                    <li>↔️ Use corner handles to resize</li>
-                    <li>🔄 Rotate using the top handle</li>
-                    <li>✨ Double-click text to edit</li>
+                    <li>🖱️ Click and drag elements to position them</li>
+                    <li>↔️ Use corner handles to resize elements</li>
+                    <li>🔄 Use any edge handle to rotate</li>
+                    <li>✨ Double-click text to edit content</li>
+                    <li>❌ Click the × button to delete selected elements</li>
+                    <li>⌨️ Press Enter to save text changes, Escape to cancel</li>
                   </ul>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Emoji Picker Modal */}
+        {showEmojiPicker && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-[#0B3954]">Choose an Emoji</h3>
+                <button
+                  onClick={() => setShowEmojiPicker(false)}
+                  className="text-[#8B575C] hover:text-[#0B3954] text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <Picker
+                data={data}
+                onEmojiSelect={handleEmojiSelect}
+                theme="light"
+              />
+            </div>
+          </div>
+        )}
       </main>
 
       <Footer />

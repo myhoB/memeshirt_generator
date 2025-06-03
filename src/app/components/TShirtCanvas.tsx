@@ -36,7 +36,7 @@ interface DesignElement {
 }
 
 export interface TShirtCanvasRef {
-  addText: () => void;
+  addText: (initialText?: string) => void;
   downloadCanvas: () => void;
 }
 
@@ -84,7 +84,7 @@ const TShirtCanvas = forwardRef<TShirtCanvasRef, TShirtCanvasProps>(({ uploadedI
     stageRef.current = node;
   }, []);
 
-  const addText = () => {
+  const addText = (initialText: string = 'Text') => {
     const container = containerRef.current;
     if (!container) return;
     
@@ -92,7 +92,6 @@ const TShirtCanvas = forwardRef<TShirtCanvasRef, TShirtCanvasProps>(({ uploadedI
     const centerX = rect.width / 2 - 50;
     const centerY = rect.height / 2 - 25;
 
-    const defaultText = 'Text';
     const fontSize = 50;
     
     // Create a canvas to measure text width
@@ -101,13 +100,13 @@ const TShirtCanvas = forwardRef<TShirtCanvasRef, TShirtCanvasProps>(({ uploadedI
     if (!context) return;
     
     context.font = `${fontSize}px Arial`;
-    const metrics = context.measureText(defaultText);
+    const metrics = context.measureText(initialText);
     const width = metrics.width + 40; // Add some padding
 
     const newElement: DesignElement = {
       id: `text-${Date.now()}`,
       type: 'text',
-      content: defaultText,
+      content: initialText,
       x: centerX,
       y: centerY,
       width: width,
